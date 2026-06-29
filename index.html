@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>새김 - 주일 설교 기록</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/[email protected]/dist/web/static/pretendard.min.css" />
+<style>
+:root{
+  --bg-base:#121212; --bg-surface:#181818; --bg-elev:#1f1f1f; --bg-card:#252525; --bg-card2:#272727;
+  --text:#ffffff; --text-muted:#b3b3b3; --text-near:#cbcbcb;
+  --accent:#1ed760; --accent-hover:#1db954;
+  --border:#4d4d4d; --border-light:#7c7c7c;
+  --error:#f3727f; --warning:#ffa42b; --info:#539df5;
+  --shadow-card:rgba(0,0,0,0.3) 0 8px 8px;
+  --shadow-dialog:rgba(0,0,0,0.5) 0 8px 24px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Pretendard','SpotifyMixUI',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  background:var(--bg-base); color:var(--text); line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+
+/* ---------- Login ---------- */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at top,#1f1f1f 0%,#121212 60%)}
+.login-card{background:var(--bg-surface);border-radius:12px;padding:40px 32px;width:100%;max-width:420px;box-shadow:var(--shadow-dialog)}
+.login-logo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:8px}
+.login-logo-dot{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:900;color:#000;font-size:18px}
+.login-title{font-size:24px;font-weight:700;text-align:center;margin-bottom:6px}
+.login-sub{color:var(--text-muted);text-align:center;font-size:14px;margin-bottom:28px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1.4px}
+.input{
+  width:100%;background:var(--bg-elev);color:var(--text);border:none;outline:none;
+  border-radius:500px;padding:14px 20px;font-size:15px;
+  box-shadow:rgb(18,18,18) 0 1px 0, rgb(124,124,124) 0 0 0 1px inset;
+}
+.input:focus{box-shadow:rgb(18,18,18) 0 1px 0, var(--text) 0 0 0 1.5px inset}
+.textarea{
+  width:100%;background:var(--bg-elev);color:var(--text);border:none;outline:none;
+  border-radius:10px;padding:14px 16px;font-size:15px;min-height:110px;resize:vertical;
+  box-shadow:rgb(18,18,18) 0 1px 0, rgb(124,124,124) 0 0 0 1px inset;line-height:1.6;
+}
+.textarea:focus{box-shadow:rgb(18,18,18) 0 1px 0, var(--text) 0 0 0 1.5px inset}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 28px;border-radius:500px;font-size:14px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1.6px;transition:transform .08s, background .15s;
+}
+.btn:hover{transform:scale(1.03)}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:#22e068}
+.btn-ghost{background:var(--bg-elev);color:var(--text)}
+.btn-ghost:hover{background:#2a2a2a}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border-light)}
+.btn-danger{background:transparent;color:var(--error);border:1px solid var(--error)}
+.btn-block{width:100%}
+.btn-sm{padding:8px 16px;font-size:12px;letter-spacing:1.4px}
+
+/* ---------- App layout ---------- */
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:var(--bg-base);border-right:1px solid #000;padding:24px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:28px;padding:0 8px}
+.brand-dot{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:900;color:#000;font-size:14px}
+.brand-name{font-size:18px;font-weight:700}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav-item{
+  display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;
+  color:var(--text-muted);font-size:14px;font-weight:400;transition:background .15s, color .15s;
+}
+.nav-item:hover{background:#1a1a1a;color:var(--text)}
+.nav-item.active{background:var(--bg-elev);color:var(--text);font-weight:700}
+.nav-item .ico{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:16px}
+.nav-section{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.4px;margin:18px 8px 8px;font-weight:700}
+.sidebar-foot{margin-top:auto;padding:12px 8px;border-top:1px solid #2a2a2a}
+.me-name{font-size:14px;font-weight:700}
+.me-role{font-size:12px;color:var(--text-muted);margin-top:2px}
+.logout-btn{margin-top:10px;font-size:12px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:1.4px}
+.logout-btn:hover{color:var(--text)}
+
+.main{padding:32px 40px;max-width:1200px;width:100%}
+.page-title{font-size:28px;font-weight:700;margin-bottom:6px}
+.page-sub{color:var(--text-muted);font-size:14px;margin-bottom:24px}
+
+/* ---------- Cards ---------- */
+.card{background:var(--bg-surface);border-radius:8px;padding:20px;margin-bottom:14px;transition:background .15s}
+.card:hover{background:var(--bg-elev)}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+.card-title{font-size:18px;font-weight:600}
+.card-meta{font-size:12px;color:var(--text-muted);display:flex;gap:10px;flex-wrap:wrap}
+.tag{display:inline-block;background:var(--bg-card);color:var(--text-near);font-size:11px;font-weight:600;padding:3px 10px;border-radius:9999px;letter-spacing:.2px}
+.tag-accent{background:rgba(30,215,96,.15);color:var(--accent)}
+.tag-warning{background:rgba(255,164,43,.15);color:var(--warning)}
+.section{margin-top:10px}
+.section h4{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.4px;margin-bottom:4px;font-weight:700}
+.section p{font-size:14px;color:var(--text-near);white-space:pre-wrap;line-height:1.7}
+
+/* ---------- Stats ---------- */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.stat{background:var(--bg-surface);border-radius:8px;padding:18px 20px}
+.stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.4px;font-weight:700;margin-bottom:6px}
+.stat-value{font-size:28px;font-weight:700}
+.stat-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+
+/* ---------- Table ---------- */
+.table-wrap{background:var(--bg-surface);border-radius:8px;overflow:hidden;box-shadow:var(--shadow-card)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px 16px;text-align:left;font-size:14px}
+thead th{
+  background:var(--bg-elev);color:var(--text-muted);font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1.4px;border-bottom:1px solid #2a2a2a;
+}
+tbody tr{border-bottom:1px solid #1f1f1f;transition:background .15s}
+tbody tr:hover{background:var(--bg-elev)}
+tbody tr:last-child{border-bottom:none}
+.row-actions{display:flex;gap:6px;justify-content:flex-end}
+.icon-btn{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--text-muted);transition:background .15s, color .15s}
+.icon-btn:hover{background:#2a2a2a;color:var(--text)}
+
+/* ---------- Form / Modal ---------- */
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px;flex-wrap:wrap}
+.search-input{
+  background:var(--bg-elev);border:none;outline:none;color:var(--text);
+  padding:10px 18px;border-radius:500px;min-width:220px;
+  box-shadow:rgb(18,18,18) 0 1px 0, rgb(124,124,124) 0 0 0 1px inset;font-size:13px;
+}
+.select{
+  background:var(--bg-elev);border:none;outline:none;color:var(--text);
+  padding:10px 18px;border-radius:500px;font-size:13px;
+  box-shadow:rgb(18,18,18) 0 1px 0, rgb(124,124,124) 0 0 0 1px inset;
+}
+
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100;padding:24px}
+.modal{background:var(--bg-surface);border-radius:12px;padding:28px;width:100%;max-width:560px;box-shadow:var(--shadow-dialog);max-height:90vh;overflow-y:auto}
+.modal-title{font-size:20px;font-weight:700;margin-bottom:18px}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.form-row{grid-template-columns:1fr}}
+
+/* ---------- Detail / Sharing mode ---------- */
+.detail-wrap{background:var(--bg-surface);border-radius:12px;padding:32px;box-shadow:var(--shadow-card)}
+.detail-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.detail-title{font-size:24px;font-weight:700}
+.detail-meta{color:var(--text-muted);font-size:13px;margin-top:6px}
+.detail-section{margin-top:22px}
+.detail-section h3{font-size:13px;text-transform:uppercase;letter-spacing:1.4px;color:var(--accent);font-weight:700;margin-bottom:8px}
+.detail-section p{font-size:16px;color:var(--text);white-space:pre-wrap;line-height:1.8}
+
+/* ---------- Toast / Empty ---------- */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg-elev);color:var(--text);padding:14px 24px;border-radius:9999px;box-shadow:var(--shadow-dialog);z-index:200;font-size:14px;font-weight:600}
+.toast.error{background:var(--error);color:#000}
+.empty{text-align:center;padding:60px 20px;color:var(--text-muted)}
+.empty-emoji{font-size:48px;margin-bottom:12px;opacity:.5}
+
+/* ---------- Mobile ---------- */
+@media (max-width:768px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:relative;height:auto;flex-direction:row;align-items:center;padding:12px 16px;border-right:none;border-bottom:1px solid #2a2a2a;overflow-x:auto}
+  .brand{margin-bottom:0;margin-right:16px;flex-shrink:0}
+  .nav{flex-direction:row;gap:4px;flex:1}
+  .nav-item{padding:8px 12px;white-space:nowrap;font-size:13px}
+  .nav-section,.sidebar-foot{display:none}
+  .main{padding:20px 16px}
+  .page-title{font-size:22px}
+  .stat-value{font-size:22px}
+  th,td{padding:10px 12px;font-size:13px}
+  .detail-wrap{padding:20px}
+  .detail-title{font-size:20px}
+}
+
+/* utility */
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.gap-2{gap:8px}.gap-3{gap:12px}.mt-2{margin-top:8px}.mt-3{margin-top:12px}.mb-3{margin-bottom:12px}
+.hidden{display:none!important}
+.text-muted{color:var(--text-muted)}
+.text-accent{color:var(--accent)}
+
+/* reaction & comments */
+.react-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid #2a2a2a}
+.react-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--bg-elev);color:var(--text-near);
+  padding:8px 14px;border-radius:9999px;font-size:13px;font-weight:600;
+  border:1px solid transparent;transition:all .15s;
+}
+.react-btn:hover{background:#2a2a2a;color:var(--text)}
+.react-btn.active{background:rgba(30,215,96,.12);color:var(--accent);border-color:var(--accent)}
+.react-btn .emoji{font-size:15px}
+.react-btn .count{font-size:12px;color:var(--text-muted);font-weight:700;margin-left:2px}
+.react-btn.active .count{color:var(--accent)}
+.react-meta{font-size:12px;color:var(--text-muted);margin-left:auto;align-self:center}
+
+.comment-section{margin-top:20px;padding-top:18px;border-top:1px solid #2a2a2a}
+.comment-section h4{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--text-muted);font-weight:700;margin-bottom:12px}
+.comment-item{background:var(--bg-elev);border-radius:8px;padding:12px 14px;margin-bottom:8px}
+.comment-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.comment-name{font-size:13px;font-weight:700}
+.comment-time{font-size:11px;color:var(--text-muted)}
+.comment-text{font-size:14px;color:var(--text-near);white-space:pre-wrap;line-height:1.5}
+.comment-del{font-size:11px;color:var(--text-muted);margin-left:8px}
+.comment-del:hover{color:var(--error)}
+.comment-input-wrap{display:flex;gap:8px;align-items:flex-end;margin-top:10px}
+.comment-input-wrap textarea{flex:1;min-height:44px}
+
+.card-counts{display:inline-flex;gap:10px;font-size:12px;color:var(--text-muted);margin-top:6px}
+.card-counts span{display:inline-flex;align-items:center;gap:3px}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginView" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-dot">새</div>
+    </div>
+    <div class="login-title">새김</div>
+    <div class="login-sub">주일에 들은 말씀을 마음에 새기다</div>
+    <div class="field">
+      <label>아이디</label>
+      <input id="loginId" class="input" placeholder="관리자가 발급한 아이디" autocomplete="username" />
+    </div>
+    <div class="field">
+      <label>비밀번호</label>
+      <input id="loginPw" type="password" class="input" placeholder="비밀번호" autocomplete="current-password" />
+    </div>
+    <button class="btn btn-primary btn-block mt-3" onclick="login()">로그인</button>
+    <div class="text-muted mt-3" style="text-align:center;font-size:12px">
+      계정이 없다면 관리자에게 문의하세요
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="appView" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-dot">새</div>
+      <div class="brand-name">새김</div>
+    </div>
+    <nav class="nav" id="navList">
+      <button class="nav-item active" data-page="write"><span class="ico">✎</span> 새 기록</button>
+      <button class="nav-item" data-page="mine"><span class="ico">♪</span> 내 기록</button>
+      <button class="nav-item" data-page="group"><span class="ico">◉</span> 소그룹 나눔</button>
+      <button class="nav-item" data-page="sharing"><span class="ico">▶</span> 나눔 모드</button>
+      <button class="nav-item hidden" data-page="admin" id="navAdmin"><span class="ico">⚙</span> 관리자</button>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="me-name" id="meName">-</div>
+      <div class="me-role" id="meRole">-</div>
+      <button class="logout-btn" onclick="logout()">로그아웃</button>
+    </div>
+  </aside>
+
+  <main class="main" id="mainContent">
+    <!-- pages injected here -->
+  </main>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<!-- Firebase + SheetJS -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/[email protected]/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+<script>
+/* =========================================================
+   새김 (Saekim) - 주일 설교 기록 앱
+   Single-file HTML + Firebase Realtime Database
+   ========================================================= */
+
+/* -------- 1. Firebase 설정: 본인의 Firebase 프로젝트로 교체 -------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyDr1CEoZtCTujAf9mlwT6yDe8NbpGis88I",
+  authDomain: "bible-10aba.firebaseapp.com",
+  databaseURL: "https://bible-10aba-default-rtdb.firebaseio.com",
+  projectId: "bible-10aba",
+  storageBucket: "bible-10aba.firebasestorage.app",
+  messagingSenderId: "1076754753399",
+  appId: "1:1076754753399:web:58bc47d79a0a0a4beea372"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* -------- 2. 상태 -------- */
+const state = {
+  me: null,           // { id, username, name, group, role }
+  users: {},          // 전체 사용자 (관리자만)
+  records: {},        // records cache
+  page: 'write',
+};
+
+/* -------- 3. 유틸 -------- */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+const lastSunday = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - d.getDay()); // back to Sunday
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+const fmtDate = (s) => {
+  if (!s) return '';
+  const [y,m,d] = s.split('-');
+  return `${y}.${m}.${d}`;
+};
+
+function toast(msg, type='') {
+  const root = $('#toastRoot');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  root.appendChild(el);
+  setTimeout(()=>el.remove(), 2400);
+}
+
+function showModal(html) {
+  const root = $('#modalRoot');
+  root.innerHTML = `<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`;
+}
+function closeModal() { $('#modalRoot').innerHTML = ''; }
+
+/* -------- 4. 인증 (간단 username/pw, Firebase RTDB 저장) -------- */
+async function login() {
+  const id = $('#loginId').value.trim();
+  const pw = $('#loginPw').value;
+  if (!id || !pw) { toast('아이디와 비밀번호를 입력하세요','error'); return; }
+
+  try {
+    const snap = await db.ref('users').orderByChild('username').equalTo(id).once('value');
+    const data = snap.val();
+    if (!data) { toast('계정을 찾을 수 없습니다','error'); return; }
+    const userId = Object.keys(data)[0];
+    const user = data[userId];
+    if (user.password !== pw) { toast('비밀번호가 일치하지 않습니다','error'); return; }
+
+    state.me = { id: userId, ...user };
+    localStorage.setItem('saekim_session', JSON.stringify(state.me));
+    enterApp();
+  } catch(e) {
+    console.error(e);
+    toast('로그인 실패. Firebase 설정을 확인하세요','error');
+  }
+}
+
+function logout() {
+  localStorage.removeItem('saekim_session');
+  state.me = null;
+  location.reload();
+}
+
+function enterApp() {
+  $('#loginView').classList.add('hidden');
+  $('#appView').classList.remove('hidden');
+  $('#meName').textContent = state.me.name + ' (' + (state.me.group || '미배정') + ')';
+  $('#meRole').textContent = state.me.role === 'admin' ? '관리자' : '회원';
+  if (state.me.role === 'admin') $('#navAdmin').classList.remove('hidden');
+
+  $$('.nav-item').forEach(b => b.addEventListener('click', e => {
+    const page = e.currentTarget.dataset.page;
+    navigate(page);
+  }));
+  navigate('write');
+}
+
+/* -------- 5. 라우팅 -------- */
+function navigate(page) {
+  state.page = page;
+  $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+  if (page === 'write') renderWrite();
+  else if (page === 'mine') renderMine();
+  else if (page === 'group') renderGroup();
+  else if (page === 'sharing') renderSharing();
+  else if (page === 'admin') renderAdmin();
+}
+
+/* =========================================================
+   PAGE: 새 기록 작성
+   ========================================================= */
+async function renderWrite(editingRecord=null) {
+  const r = editingRecord || {};
+  // 등록된 설교 일정 가져오기
+  const sSnap = await db.ref('sermons').once('value');
+  const sermonsRaw = sSnap.val() || {};
+  const sermons = Object.entries(sermonsRaw).map(([id,s])=>({id,...s}))
+    .sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  const sermonOptions = sermons.map(s =>
+    `<option value="${s.id}">${esc(fmtDate(s.date))} · ${esc(s.title||'(제목없음)')}${s.preacher?' · '+esc(s.preacher):''}</option>`
+  ).join('');
+
+  const main = $('#mainContent');
+  main.innerHTML = `
+    <div class="page-title">${editingRecord ? '기록 수정' : '새 기록 작성'}</div>
+    <div class="page-sub">오늘 들은 말씀을 마음에 새겨보세요</div>
+
+    <div class="card" style="padding:24px">
+      ${sermons.length > 0 && !editingRecord ? `
+      <div class="field">
+        <label>설교 선택 (관리자가 미리 등록한 일정)</label>
+        <select id="f_sermon" class="input" onchange="applySermonPreset()">
+          <option value="">직접 입력</option>
+          ${sermonOptions}
+        </select>
+      </div>
+      `:''}
+      <div class="form-row">
+        <div class="field">
+          <label>설교 날짜</label>
+          <input id="f_date" class="input" type="date" value="${r.sermonDate || lastSunday()}" />
+        </div>
+        <div class="field">
+          <label>설교자</label>
+          <input id="f_preacher" class="input" placeholder="예: 김목사" value="${esc(r.preacher||'')}" />
+        </div>
+      </div>
+      <div class="field">
+        <label>설교 제목</label>
+        <input id="f_title" class="input" placeholder="설교 제목" value="${esc(r.sermonTitle||'')}" />
+      </div>
+      <div class="field">
+        <label>본문 말씀</label>
+        <input id="f_verse" class="input" placeholder="예: 요한복음 3:16" value="${esc(r.mainVerse||'')}" />
+      </div>
+      <div class="field">
+        <label>느낀점</label>
+        <textarea id="f_feeling" class="textarea" placeholder="오늘 설교를 들으며 느낀 점을 자유롭게 기록하세요">${esc(r.feeling||'')}</textarea>
+      </div>
+      <div class="field">
+        <label>기억에 남는 말씀·구절</label>
+        <textarea id="f_memorable" class="textarea" placeholder="가장 마음에 와닿은 구절이나 표현">${esc(r.memorable||'')}</textarea>
+      </div>
+      <div class="field">
+        <label>실천·결심</label>
+        <textarea id="f_resolution" class="textarea" placeholder="이번 한 주 실천하고 싶은 것">${esc(r.resolution||'')}</textarea>
+      </div>
+      <div class="row" style="justify-content:flex-end;gap:10px;margin-top:8px">
+        ${editingRecord ? '<button class="btn btn-ghost" onclick="navigate(\'mine\')">취소</button>':''}
+        <button class="btn btn-primary" onclick="saveRecord(${editingRecord ? `'${editingRecord.id}'` : 'null'})">${editingRecord ? '수정 완료' : '기록 저장'}</button>
+      </div>
+    </div>
+  `;
+  // 캐시
+  state._sermonsCache = sermons;
+}
+
+function applySermonPreset() {
+  const id = $('#f_sermon').value;
+  if (!id) return;
+  const s = (state._sermonsCache || []).find(x => x.id === id);
+  if (!s) return;
+  if (s.date) $('#f_date').value = s.date;
+  if (s.title) $('#f_title').value = s.title;
+  if (s.preacher) $('#f_preacher').value = s.preacher;
+  if (s.mainVerse) $('#f_verse').value = s.mainVerse;
+  toast('설교 정보가 자동 입력되었습니다');
+}
+
+async function saveRecord(editId) {
+  const payload = {
+    userId: state.me.id,
+    userName: state.me.name,
+    group: state.me.group || '미배정',
+    sermonDate: $('#f_date').value,
+    sermonTitle: $('#f_title').value.trim(),
+    preacher: $('#f_preacher').value.trim(),
+    mainVerse: $('#f_verse').value.trim(),
+    feeling: $('#f_feeling').value.trim(),
+    memorable: $('#f_memorable').value.trim(),
+    resolution: $('#f_resolution').value.trim(),
+    updatedAt: Date.now(),
+  };
+  if (!payload.sermonDate) { toast('설교 날짜를 입력하세요','error'); return; }
+  if (!payload.feeling && !payload.memorable && !payload.resolution) {
+    toast('최소 한 가지는 작성해주세요','error'); return;
+  }
+
+  try {
+    if (editId) {
+      await db.ref('records/' + editId).update(payload);
+      toast('수정되었습니다');
+    } else {
+      payload.createdAt = Date.now();
+      await db.ref('records').push(payload);
+      toast('저장되었습니다');
+    }
+    navigate('mine');
+  } catch(e) { console.error(e); toast('저장 실패','error'); }
+}
+
+/* =========================================================
+   PAGE: 내 기록
+   ========================================================= */
+async function renderMine() {
+  const main = $('#mainContent');
+  main.innerHTML = `
+    <div class="page-title">내 기록</div>
+    <div class="page-sub">내가 남긴 설교 기록들</div>
+    <div id="mineList" class="empty">불러오는 중...</div>
+  `;
+  const snap = await db.ref('records').orderByChild('userId').equalTo(state.me.id).once('value');
+  const data = snap.val() || {};
+  const list = Object.entries(data).map(([id,r])=>({id,...r}))
+    .sort((a,b)=> (b.sermonDate||'').localeCompare(a.sermonDate||''));
+  if (list.length === 0) {
+    $('#mineList').innerHTML = `<div class="empty"><div class="empty-emoji">📖</div>아직 기록이 없습니다.<br>첫 기록을 남겨보세요.</div>`;
+    return;
+  }
+  $('#mineList').classList.remove('empty');
+  $('#mineList').innerHTML = list.map(r => recordCard(r, true)).join('');
+  loadCardCounts(list.map(r => r.id));
+}
+
+function recordCard(r, isMine) {
+  return `
+    <div class="card" onclick="openDetail('${r.id}')" style="cursor:pointer">
+      <div class="card-head">
+        <div>
+          <div class="card-title">${esc(r.sermonTitle || '(제목 없음)')}</div>
+          <div class="card-meta">
+            <span class="tag">${esc(fmtDate(r.sermonDate))}</span>
+            ${r.preacher ? `<span>${esc(r.preacher)}</span>` : ''}
+            ${r.mainVerse ? `<span>${esc(r.mainVerse)}</span>` : ''}
+            ${!isMine ? `<span class="tag tag-accent">${esc(r.userName)}</span>` : ''}
+          </div>
+          <div class="card-counts" id="counts-${r.id}"></div>
+        </div>
+        ${isMine ? `<div class="row" onclick="event.stopPropagation()">
+          <button class="btn btn-ghost btn-sm" onclick="editRecord('${r.id}')">수정</button>
+          <button class="btn btn-outline btn-sm" onclick="deleteRecord('${r.id}')">삭제</button>
+        </div>`:''}
+      </div>
+      ${r.memorable ? `<div class="section"><h4>기억에 남는 구절</h4><p>${esc(r.memorable).slice(0,140)}${r.memorable.length>140?'…':''}</p></div>`:''}
+    </div>
+  `;
+}
+
+// 카드별 공감/댓글 카운트 비동기 로딩 (목록 그린 직후 호출)
+async function loadCardCounts(recordIds) {
+  for (const id of recordIds) {
+    try {
+      const [rSnap, cSnap] = await Promise.all([
+        db.ref('reactions/' + id).once('value'),
+        db.ref('comments/' + id).once('value'),
+      ]);
+      const reactions = rSnap.val() || {};
+      const comments = cSnap.val() || {};
+      const counts = { love:0, pray:0, grace:0 };
+      Object.values(reactions).forEach(r => { if (counts[r.type] !== undefined) counts[r.type]++; });
+      const cCount = Object.keys(comments).length;
+      const el = document.getElementById('counts-' + id);
+      if (!el) continue;
+      const parts = [];
+      if (counts.love) parts.push(`<span>❤️ ${counts.love}</span>`);
+      if (counts.pray) parts.push(`<span>🙏 ${counts.pray}</span>`);
+      if (counts.grace) parts.push(`<span>✨ ${counts.grace}</span>`);
+      if (cCount) parts.push(`<span>💬 ${cCount}</span>`);
+      el.innerHTML = parts.join('');
+    } catch(e) {}
+  }
+}
+
+async function editRecord(id) {
+  const snap = await db.ref('records/' + id).once('value');
+  const r = snap.val();
+  if (!r) return;
+  renderWrite({id, ...r});
+}
+
+async function deleteRecord(id) {
+  if (!confirm('이 기록을 삭제할까요?')) return;
+  await db.ref('records/' + id).remove();
+  toast('삭제되었습니다');
+  renderMine();
+}
+
+async function openDetail(id) {
+  const snap = await db.ref('records/' + id).once('value');
+  const r = snap.val();
+  if (!r) return;
+  showModal(`
+    <div class="modal-title">${esc(r.sermonTitle || '(제목 없음)')}</div>
+    <div class="detail-meta">
+      ${esc(fmtDate(r.sermonDate))}
+      ${r.preacher ? ' · ' + esc(r.preacher) : ''}
+      ${r.mainVerse ? ' · ' + esc(r.mainVerse) : ''}
+      <br><span class="tag tag-accent" style="margin-top:6px;display:inline-block">${esc(r.userName)} · ${esc(r.group||'미배정')}</span>
+    </div>
+    ${r.feeling ? `<div class="detail-section"><h3>느낀점</h3><p>${esc(r.feeling)}</p></div>`:''}
+    ${r.memorable ? `<div class="detail-section"><h3>기억에 남는 구절</h3><p>${esc(r.memorable)}</p></div>`:''}
+    ${r.resolution ? `<div class="detail-section"><h3>실천·결심</h3><p>${esc(r.resolution)}</p></div>`:''}
+    <div id="reactBar-${id}"></div>
+    <div id="commentBox-${id}"></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">닫기</button></div>
+  `);
+  loadReactionBar(id, `reactBar-${id}`);
+  loadCommentBox(id, `commentBox-${id}`);
+}
+
+/* -------- 공감 (reactions) -------- */
+const REACTION_TYPES = [
+  { type:'love',  emoji:'❤️', label:'공감' },
+  { type:'pray',  emoji:'🙏', label:'기도' },
+  { type:'grace', emoji:'✨', label:'은혜' },
+];
+
+async function loadReactionBar(recordId, mountId) {
+  const snap = await db.ref('reactions/' + recordId).once('value');
+  const reactions = snap.val() || {};
+  const mine = reactions[state.me.id]?.type || null;
+  const counts = { love:0, pray:0, grace:0 };
+  Object.values(reactions).forEach(r => { if (counts[r.type] !== undefined) counts[r.type]++; });
+  const total = Object.keys(reactions).length;
+  const html = `
+    <div class="react-bar">
+      ${REACTION_TYPES.map(rt => `
+        <button class="react-btn ${mine===rt.type?'active':''}" onclick="toggleReaction('${recordId}','${rt.type}','${mountId}')">
+          <span class="emoji">${rt.emoji}</span>
+          <span>${rt.label}</span>
+          <span class="count">${counts[rt.type]||''}</span>
+        </button>
+      `).join('')}
+      <span class="react-meta">${total ? total + '명이 공감했어요' : '첫 공감을 남겨보세요'}</span>
+    </div>
+  `;
+  const el = document.getElementById(mountId);
+  if (el) el.innerHTML = html;
+}
+
+async function toggleReaction(recordId, type, mountId) {
+  const ref = db.ref(`reactions/${recordId}/${state.me.id}`);
+  const cur = await ref.once('value');
+  const v = cur.val();
+  if (v && v.type === type) {
+    await ref.remove(); // 같은 종류 다시 누르면 취소
+  } else {
+    await ref.set({ type, name: state.me.name, at: Date.now() });
+  }
+  loadReactionBar(recordId, mountId);
+}
+
+/* -------- 댓글 (comments) -------- */
+async function loadCommentBox(recordId, mountId) {
+  const snap = await db.ref('comments/' + recordId).once('value');
+  const data = snap.val() || {};
+  const list = Object.entries(data).map(([id,c])=>({id,...c}))
+    .sort((a,b)=> (a.createdAt||0) - (b.createdAt||0));
+
+  const items = list.map(c => {
+    const canDel = c.userId === state.me.id || state.me.role === 'admin';
+    return `
+      <div class="comment-item">
+        <div class="comment-head">
+          <div class="comment-name">${esc(c.userName)}</div>
+          <div class="row gap-2">
+            <span class="comment-time">${fmtRelative(c.createdAt)}</span>
+            ${canDel ? `<button class="comment-del" onclick="deleteComment('${recordId}','${c.id}','${mountId}')">삭제</button>`:''}
+          </div>
+        </div>
+        <div class="comment-text">${esc(c.text)}</div>
+      </div>
+    `;
+  }).join('');
+
+  const html = `
+    <div class="comment-section">
+      <h4>댓글 ${list.length ? `· ${list.length}` : ''}</h4>
+      ${items || '<div class="text-muted" style="font-size:13px;padding:8px 0">아직 댓글이 없어요. 첫 댓글을 남겨보세요.</div>'}
+      <div class="comment-input-wrap">
+        <textarea id="cmtInput-${recordId}" class="textarea" style="min-height:44px" placeholder="댓글 남기기..."></textarea>
+        <button class="btn btn-primary btn-sm" onclick="addComment('${recordId}','${mountId}')">등록</button>
+      </div>
+    </div>
+  `;
+  const el = document.getElementById(mountId);
+  if (el) el.innerHTML = html;
+}
+
+async function addComment(recordId, mountId) {
+  const text = $('#cmtInput-' + recordId).value.trim();
+  if (!text) return;
+  await db.ref('comments/' + recordId).push({
+    userId: state.me.id,
+    userName: state.me.name,
+    group: state.me.group || '',
+    text,
+    createdAt: Date.now(),
+  });
+  loadCommentBox(recordId, mountId);
+}
+
+async function deleteComment(recordId, commentId, mountId) {
+  if (!confirm('이 댓글을 삭제할까요?')) return;
+  await db.ref(`comments/${recordId}/${commentId}`).remove();
+  loadCommentBox(recordId, mountId);
+}
+
+function fmtRelative(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff/60000);
+  if (m < 1) return '방금';
+  if (m < 60) return `${m}분 전`;
+  const h = Math.floor(m/60);
+  if (h < 24) return `${h}시간 전`;
+  const d = Math.floor(h/24);
+  if (d < 7) return `${d}일 전`;
+  return new Date(ts).toLocaleDateString('ko-KR');
+}
+
+/* =========================================================
+   PAGE: 소그룹 나눔 (같은 group 멤버 기록 열람)
+   ========================================================= */
+async function renderGroup() {
+  const main = $('#mainContent');
+  main.innerHTML = `
+    <div class="toolbar">
+      <div>
+        <div class="page-title">소그룹 나눔</div>
+        <div class="page-sub">${esc(state.me.group || '미배정')} 그룹의 기록</div>
+      </div>
+      <div class="row">
+        <input id="grpSearch" class="search-input" placeholder="제목·이름·내용 검색" oninput="filterGroup()" />
+        <select id="grpDate" class="select" onchange="filterGroup()">
+          <option value="">전체 기간</option>
+        </select>
+      </div>
+    </div>
+    <div id="grpList" class="empty">불러오는 중...</div>
+  `;
+
+  const snap = await db.ref('records').orderByChild('group').equalTo(state.me.group || '미배정').once('value');
+  const data = snap.val() || {};
+  state.records = Object.entries(data).map(([id,r])=>({id,...r}))
+    .sort((a,b)=> (b.sermonDate||'').localeCompare(a.sermonDate||''));
+
+  // populate date filter (unique sermonDates)
+  const dates = [...new Set(state.records.map(r=>r.sermonDate).filter(Boolean))].sort().reverse();
+  const sel = $('#grpDate');
+  dates.forEach(d => {
+    const o = document.createElement('option'); o.value = d; o.textContent = fmtDate(d); sel.appendChild(o);
+  });
+
+  filterGroup();
+}
+
+function filterGroup() {
+  const q = ($('#grpSearch')?.value || '').toLowerCase();
+  const d = $('#grpDate')?.value || '';
+  let list = state.records;
+  if (d) list = list.filter(r => r.sermonDate === d);
+  if (q) list = list.filter(r =>
+    (r.sermonTitle||'').toLowerCase().includes(q) ||
+    (r.userName||'').toLowerCase().includes(q) ||
+    (r.feeling||'').toLowerCase().includes(q) ||
+    (r.memorable||'').toLowerCase().includes(q) ||
+    (r.resolution||'').toLowerCase().includes(q)
+  );
+  const el = $('#grpList');
+  if (list.length === 0) {
+    el.className = 'empty';
+    el.innerHTML = `<div class="empty-emoji">🌱</div>표시할 기록이 없습니다`;
+  } else {
+    el.className = '';
+    el.innerHTML = list.map(r => recordCard(r, r.userId === state.me.id)).join('');
+    loadCardCounts(list.map(r => r.id));
+  }
+}
+
+/* =========================================================
+   PAGE: 나눔 모드 (한 명씩 큰 카드, 키보드 ←→)
+   ========================================================= */
+async function renderSharing() {
+  const main = $('#mainContent');
+  main.innerHTML = `
+    <div class="page-title">나눔 모드</div>
+    <div class="page-sub">한 명씩 큰 화면으로 — 화살표 키 또는 버튼으로 이동</div>
+    <div id="shareSetup" class="card" style="padding:24px">
+      <div class="form-row">
+        <div class="field">
+          <label>그룹</label>
+          <select id="sh_group" class="input">
+            <option value="${esc(state.me.group||'미배정')}">${esc(state.me.group||'미배정')}</option>
+            ${state.me.role==='admin' ? '<option value="__all__">전체</option>':''}
+          </select>
+        </div>
+        <div class="field">
+          <label>날짜 (특정 주일 또는 전체)</label>
+          <select id="sh_date" class="input">
+            <option value="">불러오는 중...</option>
+          </select>
+        </div>
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-primary" onclick="startSharing()">▶ 나눔 시작</button>
+      </div>
+    </div>
+    <div id="shareStage" class="hidden"></div>
+  `;
+
+  // 날짜 옵션 채우기 (해당 그룹의 unique sermonDate)
+  await refreshSharingDates();
+  $('#sh_group').addEventListener('change', refreshSharingDates);
+}
+
+async function refreshSharingDates() {
+  const grp = $('#sh_group').value;
+  let snap;
+  if (grp === '__all__') {
+    snap = await db.ref('records').once('value');
+  } else {
+    snap = await db.ref('records').orderByChild('group').equalTo(grp).once('value');
+  }
+  const data = snap.val() || {};
+  const dates = [...new Set(Object.values(data).map(r=>r.sermonDate).filter(Boolean))].sort().reverse();
+  const sel = $('#sh_date');
+  sel.innerHTML = `<option value="">전체 기간</option>` +
+    dates.map(d => `<option value="${d}">${fmtDate(d)}</option>`).join('');
+  if (dates[0]) sel.value = dates[0]; // 최신 주일 기본 선택
+}
+
+async function startSharing() {
+  const grp = $('#sh_group').value;
+  const date = $('#sh_date').value;
+
+  let snap;
+  if (grp === '__all__') snap = await db.ref('records').once('value');
+  else snap = await db.ref('records').orderByChild('group').equalTo(grp).once('value');
+
+  let list = Object.entries(snap.val()||{}).map(([id,r])=>({id,...r}));
+  if (date) list = list.filter(r => r.sermonDate === date);
+  list.sort((a,b) => (a.userName||'').localeCompare(b.userName||''));
+
+  if (list.length === 0) { toast('해당 조건에 기록이 없습니다','error'); return; }
+
+  state._shareList = list;
+  state._shareIdx = 0;
+  $('#shareSetup').classList.add('hidden');
+  $('#shareStage').classList.remove('hidden');
+  renderShareSlide();
+  // 키보드 단축키
+  state._shareKeyHandler = (e) => {
+    // 입력 필드 포커스 시 단축키 무시
+    const tag = (e.target.tagName || '').toUpperCase();
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (e.key === 'ArrowRight') shareNext();
+    else if (e.key === 'ArrowLeft') sharePrev();
+    else if (e.key === 'Escape') exitSharing();
+  };
+  document.addEventListener('keydown', state._shareKeyHandler);
+}
+
+function renderShareSlide() {
+  const r = state._shareList[state._shareIdx];
+  const total = state._shareList.length;
+  const idx = state._shareIdx + 1;
+  $('#shareStage').innerHTML = `
+    <div class="detail-wrap" style="position:relative">
+      <div class="detail-head">
+        <div>
+          <div class="row gap-2">
+            <span class="tag tag-accent" style="font-size:13px;padding:5px 14px">${idx} / ${total}</span>
+            <span class="tag" style="font-size:13px;padding:5px 14px">${esc(r.userName)} · ${esc(r.group||'미배정')}</span>
+          </div>
+          <div class="detail-title" style="margin-top:14px;font-size:28px">${esc(r.sermonTitle || '(제목 없음)')}</div>
+          <div class="detail-meta">
+            ${esc(fmtDate(r.sermonDate))}
+            ${r.preacher ? ' · ' + esc(r.preacher) : ''}
+            ${r.mainVerse ? ' · ' + esc(r.mainVerse) : ''}
+          </div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="exitSharing()">나가기 (ESC)</button>
+      </div>
+      ${r.feeling ? `<div class="detail-section"><h3>느낀점</h3><p>${esc(r.feeling)}</p></div>`:''}
+      ${r.memorable ? `<div class="detail-section"><h3>기억에 남는 구절</h3><p>${esc(r.memorable)}</p></div>`:''}
+      ${r.resolution ? `<div class="detail-section"><h3>실천·결심</h3><p>${esc(r.resolution)}</p></div>`:''}
+      <div id="shareReact"></div>
+      <div id="shareComment"></div>
+    </div>
+    <div class="row" style="justify-content:space-between;margin-top:20px">
+      <button class="btn btn-ghost" onclick="sharePrev()" ${state._shareIdx===0?'disabled style="opacity:.4;cursor:not-allowed"':''}>← 이전</button>
+      <div class="text-muted" style="font-size:12px">키보드 ← → 로도 이동 가능</div>
+      <button class="btn btn-primary" onclick="shareNext()" ${state._shareIdx===total-1?'disabled style="opacity:.4;cursor:not-allowed"':''}>다음 →</button>
+    </div>
+  `;
+  loadReactionBar(r.id, 'shareReact');
+  loadCommentBox(r.id, 'shareComment');
+}
+
+function shareNext() { if (state._shareIdx < state._shareList.length-1) { state._shareIdx++; renderShareSlide(); } }
+function sharePrev() { if (state._shareIdx > 0) { state._shareIdx--; renderShareSlide(); } }
+function exitSharing() {
+  if (state._shareKeyHandler) document.removeEventListener('keydown', state._shareKeyHandler);
+  state._shareKeyHandler = null;
+  renderSharing();
+}
+
+/* =========================================================
+   PAGE: 관리자
+   ========================================================= */
+async function renderAdmin() {
+  if (state.me.role !== 'admin') { navigate('write'); return; }
+  const main = $('#mainContent');
+  main.innerHTML = `
+    <div class="toolbar">
+      <div>
+        <div class="page-title">관리자</div>
+        <div class="page-sub">사용자·기록 관리 및 통계 추출</div>
+      </div>
+      <div class="row">
+        <button class="btn btn-ghost btn-sm" onclick="exportUsersXlsx()">사용자 엑셀</button>
+        <button class="btn btn-primary btn-sm" onclick="exportRecordsXlsx()">기록 엑셀</button>
+      </div>
+    </div>
+
+    <div id="statGrid" class="stat-grid"></div>
+
+    <div class="page-title" style="font-size:18px;margin-top:10px">사용자 관리</div>
+    <div class="toolbar" style="margin-bottom:10px">
+      <input id="userSearch" class="search-input" placeholder="이름·아이디·그룹 검색" oninput="renderUserTable()" />
+      <button class="btn btn-primary btn-sm" onclick="openUserModal()">+ 계정 발급</button>
+    </div>
+    <div id="userTable" class="table-wrap"></div>
+
+    <div class="page-title" style="font-size:18px;margin-top:24px">출석 현황 (주별)</div>
+    <div id="attendance" class="table-wrap"></div>
+
+    <div class="page-title" style="font-size:18px;margin-top:32px">설교 일정 관리</div>
+    <div class="page-sub">미리 등록하면 회원이 새 기록 작성 시 드롭다운에서 선택할 수 있습니다</div>
+    <div class="toolbar" style="margin-bottom:10px">
+      <input id="sermonSearch" class="search-input" placeholder="제목·설교자 검색" oninput="renderSermonTable()" />
+      <div class="row">
+        <button class="btn btn-ghost btn-sm" onclick="openBatchSermonModal()">일괄 등록</button>
+        <button class="btn btn-primary btn-sm" onclick="openSermonModal()">+ 설교 등록</button>
+      </div>
+    </div>
+    <div id="sermonTable" class="table-wrap"></div>
+
+    <div class="page-title" style="font-size:18px;margin-top:32px">통계</div>
+    <div class="stat-grid" style="grid-template-columns:1fr 1fr">
+      <div class="card" style="background:var(--bg-surface);padding:20px">
+        <div class="stat-label" style="margin-bottom:12px">월별 제출 건수 (최근 6개월)</div>
+        <div style="position:relative;height:240px"><canvas id="chartMonthly"></canvas></div>
+      </div>
+      <div class="card" style="background:var(--bg-surface);padding:20px">
+        <div class="stat-label" style="margin-bottom:12px">사용자별 누적 제출</div>
+        <div style="position:relative;height:240px;overflow-y:auto"><canvas id="chartByUser"></canvas></div>
+      </div>
+    </div>
+  `;
+
+  // load users
+  const uSnap = await db.ref('users').once('value');
+  state.users = uSnap.val() || {};
+
+  // load records
+  const rSnap = await db.ref('records').once('value');
+  const allRecords = rSnap.val() || {};
+  const recArr = Object.entries(allRecords).map(([id,r])=>({id,...r}));
+
+  // load sermons
+  const sSnap = await db.ref('sermons').once('value');
+  state.sermons = sSnap.val() || {};
+
+  // stats
+  const userCount = Object.keys(state.users).length;
+  const recordCount = recArr.length;
+  const groupCount = new Set(Object.values(state.users).map(u=>u.group).filter(Boolean)).size;
+  const recentWeekRecords = recArr.filter(r => {
+    if (!r.sermonDate) return false;
+    const d = new Date(r.sermonDate);
+    return (Date.now() - d.getTime()) < 7*24*3600*1000;
+  }).length;
+
+  $('#statGrid').innerHTML = `
+    ${statCard('전체 사용자', userCount + '명')}
+    ${statCard('전체 기록', recordCount + '개')}
+    ${statCard('소그룹 수', groupCount + '개')}
+    ${statCard('최근 7일', recentWeekRecords + '건')}
+  `;
+
+  renderUserTable();
+  renderAttendance(recArr);
+  renderSermonTable();
+  renderCharts(recArr);
+}
+
+function statCard(label, value, sub='') {
+  return `<div class="stat"><div class="stat-label">${esc(label)}</div><div class="stat-value">${esc(value)}</div>${sub?`<div class="stat-sub">${esc(sub)}</div>`:''}</div>`;
+}
+
+function renderUserTable() {
+  const q = ($('#userSearch')?.value || '').toLowerCase();
+  const list = Object.entries(state.users).map(([id,u])=>({id,...u}))
+    .filter(u => !q || (u.name||'').toLowerCase().includes(q) || (u.username||'').toLowerCase().includes(q) || (u.group||'').toLowerCase().includes(q))
+    .sort((a,b)=> (a.group||'').localeCompare(b.group||'') || (a.name||'').localeCompare(b.name||''));
+
+  $('#userTable').innerHTML = `
+    <table>
+      <thead>
+        <tr><th>이름</th><th>아이디</th><th>소그룹</th><th>권한</th><th>비밀번호</th><th></th></tr>
+      </thead>
+      <tbody>
+        ${list.length === 0 ? '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">등록된 사용자가 없습니다</td></tr>' :
+          list.map(u => `
+            <tr>
+              <td><strong>${esc(u.name)}</strong></td>
+              <td>${esc(u.username)}</td>
+              <td>${esc(u.group||'-')}</td>
+              <td>${u.role==='admin' ? '<span class="tag tag-accent">관리자</span>' : '<span class="tag">회원</span>'}</td>
+              <td><code style="color:var(--text-muted);font-size:12px">${esc(u.password)}</code></td>
+              <td class="row-actions">
+                <button class="btn btn-ghost btn-sm" onclick="openUserModal('${u.id}')">수정</button>
+                <button class="btn btn-outline btn-sm" onclick="deleteUser('${u.id}')">삭제</button>
+              </td>
+            </tr>
+          `).join('')
+        }
+      </tbody>
+    </table>
+  `;
+}
+
+function renderAttendance(recArr) {
+  // group by sermonDate × userName
+  const dates = [...new Set(recArr.map(r=>r.sermonDate).filter(Boolean))].sort().reverse().slice(0, 8);
+  const users = Object.values(state.users).filter(u=>u.role!=='admin').sort((a,b)=>(a.group||'').localeCompare(b.group||'')||(a.name||'').localeCompare(b.name||''));
+  const map = {};
+  recArr.forEach(r => {
+    if (!r.sermonDate) return;
+    map[r.sermonDate] = map[r.sermonDate] || {};
+    map[r.sermonDate][r.userId] = true;
+  });
+
+  if (dates.length === 0 || users.length === 0) {
+    $('#attendance').innerHTML = `<div class="empty">데이터가 없습니다</div>`;
+    return;
+  }
+
+  $('#attendance').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>이름</th><th>그룹</th>
+          ${dates.map(d => `<th>${fmtDate(d)}</th>`).join('')}
+          <th>합계</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${users.map(u => {
+          const cells = dates.map(d => map[d]?.[u.id] ? '✓' : '·');
+          const total = cells.filter(c=>c==='✓').length;
+          return `<tr>
+            <td><strong>${esc(u.name)}</strong></td>
+            <td>${esc(u.group||'-')}</td>
+            ${cells.map(c => `<td style="text-align:center;color:${c==='✓'?'var(--accent)':'var(--text-muted)'};font-weight:700">${c}</td>`).join('')}
+            <td style="text-align:center;color:var(--accent);font-weight:700">${total}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+/* -------- User modal (create/edit) -------- */
+function openUserModal(editId=null) {
+  const u = editId ? state.users[editId] : {};
+  showModal(`
+    <div class="modal-title">${editId ? '사용자 수정' : '계정 발급'}</div>
+    <div class="field"><label>이름</label><input id="u_name" class="input" value="${esc(u.name||'')}" placeholder="홍길동" /></div>
+    <div class="field"><label>아이디</label><input id="u_username" class="input" value="${esc(u.username||'')}" placeholder="로그인 ID" /></div>
+    <div class="field"><label>비밀번호</label><input id="u_password" class="input" value="${esc(u.password||'')}" placeholder="초기 비밀번호" /></div>
+    <div class="form-row">
+      <div class="field"><label>소그룹</label><input id="u_group" class="input" value="${esc(u.group||'')}" placeholder="예: 청년부 1팀" /></div>
+      <div class="field"><label>권한</label>
+        <select id="u_role" class="input">
+          <option value="member" ${u.role!=='admin'?'selected':''}>회원</option>
+          <option value="admin" ${u.role==='admin'?'selected':''}>관리자</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveUser(${editId?`'${editId}'`:'null'})">저장</button>
+    </div>
+  `);
+}
+
+async function saveUser(editId) {
+  const payload = {
+    name: $('#u_name').value.trim(),
+    username: $('#u_username').value.trim(),
+    password: $('#u_password').value,
+    group: $('#u_group').value.trim(),
+    role: $('#u_role').value,
+  };
+  if (!payload.name || !payload.username || !payload.password) {
+    toast('이름·아이디·비밀번호는 필수입니다','error'); return;
+  }
+  // duplicate username check
+  const dup = Object.entries(state.users).find(([id,u]) => u.username === payload.username && id !== editId);
+  if (dup) { toast('이미 사용 중인 아이디입니다','error'); return; }
+
+  try {
+    if (editId) {
+      await db.ref('users/' + editId).update(payload);
+      toast('수정되었습니다');
+    } else {
+      payload.createdAt = Date.now();
+      await db.ref('users').push(payload);
+      toast('계정이 발급되었습니다');
+    }
+    closeModal();
+    renderAdmin();
+  } catch(e) { console.error(e); toast('저장 실패','error'); }
+}
+
+async function deleteUser(id) {
+  if (!confirm('이 사용자를 삭제할까요? (해당 사용자의 기록은 유지됩니다)')) return;
+  await db.ref('users/' + id).remove();
+  toast('삭제되었습니다');
+  renderAdmin();
+}
+
+/* -------- Sermon (설교 일정) -------- */
+function renderSermonTable() {
+  const q = ($('#sermonSearch')?.value || '').toLowerCase();
+  const list = Object.entries(state.sermons||{}).map(([id,s])=>({id,...s}))
+    .filter(s => !q || (s.title||'').toLowerCase().includes(q) || (s.preacher||'').toLowerCase().includes(q))
+    .sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+
+  $('#sermonTable').innerHTML = `
+    <table>
+      <thead>
+        <tr><th>날짜</th><th>제목</th><th>설교자</th><th>본문</th><th></th></tr>
+      </thead>
+      <tbody>
+        ${list.length === 0 ? '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">등록된 설교 일정이 없습니다</td></tr>' :
+          list.map(s => `
+            <tr>
+              <td>${esc(fmtDate(s.date))}</td>
+              <td><strong>${esc(s.title||'')}</strong></td>
+              <td>${esc(s.preacher||'-')}</td>
+              <td>${esc(s.mainVerse||'-')}</td>
+              <td class="row-actions">
+                <button class="btn btn-ghost btn-sm" onclick="openSermonModal('${s.id}')">수정</button>
+                <button class="btn btn-outline btn-sm" onclick="deleteSermon('${s.id}')">삭제</button>
+              </td>
+            </tr>
+          `).join('')
+        }
+      </tbody>
+    </table>
+  `;
+}
+
+function openSermonModal(editId=null) {
+  const s = editId ? state.sermons[editId] : {};
+  showModal(`
+    <div class="modal-title">${editId ? '설교 수정' : '설교 일정 등록'}</div>
+    <div class="form-row">
+      <div class="field"><label>날짜</label><input id="s_date" class="input" type="date" value="${s.date||lastSunday()}" /></div>
+      <div class="field"><label>설교자</label><input id="s_preacher" class="input" value="${esc(s.preacher||'')}" placeholder="예: 김목사" /></div>
+    </div>
+    <div class="field"><label>설교 제목</label><input id="s_title" class="input" value="${esc(s.title||'')}" placeholder="설교 제목" /></div>
+    <div class="field"><label>본문 말씀</label><input id="s_verse" class="input" value="${esc(s.mainVerse||'')}" placeholder="예: 요한복음 3:16" /></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveSermon(${editId?`'${editId}'`:'null'})">저장</button>
+    </div>
+  `);
+}
+
+async function saveSermon(editId) {
+  const payload = {
+    date: $('#s_date').value,
+    title: $('#s_title').value.trim(),
+    preacher: $('#s_preacher').value.trim(),
+    mainVerse: $('#s_verse').value.trim(),
+    updatedAt: Date.now(),
+  };
+  if (!payload.date || !payload.title) { toast('날짜·제목은 필수입니다','error'); return; }
+  try {
+    if (editId) await db.ref('sermons/' + editId).update(payload);
+    else { payload.createdAt = Date.now(); await db.ref('sermons').push(payload); }
+    toast('저장되었습니다');
+    closeModal();
+    renderAdmin();
+  } catch(e) { console.error(e); toast('저장 실패','error'); }
+}
+
+async function deleteSermon(id) {
+  if (!confirm('이 설교 일정을 삭제할까요?')) return;
+  await db.ref('sermons/' + id).remove();
+  toast('삭제되었습니다');
+  renderAdmin();
+}
+
+function openBatchSermonModal() {
+  showModal(`
+    <div class="modal-title">설교 일정 일괄 등록</div>
+    <div class="text-muted" style="font-size:13px;margin-bottom:10px">
+      각 줄에 <code>날짜,제목,설교자,본문</code> 형식으로 입력하세요.<br>
+      예: <code>2026-07-05,은혜의 강가에서,김목사,시편 23:1-6</code>
+    </div>
+    <textarea id="batch_text" class="textarea" style="min-height:200px;font-family:monospace;font-size:13px"
+      placeholder="2026-07-05,은혜의 강가에서,김목사,시편 23:1-6
+2026-07-12,믿음의 사람들,이목사,히브리서 11:1-7"></textarea>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" onclick="batchSermonImport()">일괄 등록</button>
+    </div>
+  `);
+}
+
+async function batchSermonImport() {
+  const text = $('#batch_text').value.trim();
+  if (!text) { toast('입력 내용이 없습니다','error'); return; }
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  let success = 0, fail = 0;
+  for (const line of lines) {
+    const parts = line.split(',').map(p=>p.trim());
+    const [date, title, preacher='', mainVerse=''] = parts;
+    if (!date || !title || !/^\d{4}-\d{2}-\d{2}$/.test(date)) { fail++; continue; }
+    try {
+      await db.ref('sermons').push({ date, title, preacher, mainVerse, createdAt: Date.now() });
+      success++;
+    } catch(e) { fail++; }
+  }
+  toast(`등록 완료: ${success}건${fail?` / 실패 ${fail}건`:''}`);
+  closeModal();
+  renderAdmin();
+}
+
+/* -------- Charts (Chart.js) -------- */
+let _chartMonthly = null, _chartByUser = null;
+
+function renderCharts(recArr) {
+  // 1) 월별 제출 건수 (최근 6개월)
+  const months = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  const monthlyCounts = months.map(m =>
+    recArr.filter(r => (r.sermonDate||'').startsWith(m)).length
+  );
+
+  if (_chartMonthly) _chartMonthly.destroy();
+  const ctx1 = document.getElementById('chartMonthly');
+  if (ctx1) {
+    _chartMonthly = new Chart(ctx1, {
+      type: 'bar',
+      data: {
+        labels: months.map(m => m.slice(5) + '월'),
+        datasets: [{
+          label: '제출 건수',
+          data: monthlyCounts,
+          backgroundColor: '#1ed760',
+          borderRadius: 6,
+        }]
+      },
+      options: chartBaseOptions()
+    });
+  }
+
+  // 2) 사용자별 누적 (회원만, 0건 포함)
+  const memberUsers = Object.values(state.users).filter(u => u.role !== 'admin');
+  const userCounts = memberUsers.map(u => ({
+    name: u.name,
+    count: recArr.filter(r => r.userId && state.users[r.userId]?.username === u.username || r.userName === u.name).length
+  })).sort((a,b) => b.count - a.count);
+
+  if (_chartByUser) _chartByUser.destroy();
+  const ctx2 = document.getElementById('chartByUser');
+  if (ctx2) {
+    // 사용자 수에 맞춰 캔버스 높이 조정
+    const h = Math.max(240, memberUsers.length * 26);
+    ctx2.parentElement.style.height = h + 'px';
+    _chartByUser = new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: userCounts.map(u => u.name),
+        datasets: [{
+          label: '누적 제출',
+          data: userCounts.map(u => u.count),
+          backgroundColor: '#1ed760',
+          borderRadius: 4,
+        }]
+      },
+      options: { ...chartBaseOptions(), indexAxis: 'y' }
+    });
+  }
+}
+
+function chartBaseOptions() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { backgroundColor: '#252525', borderColor: '#4d4d4d', borderWidth: 1, titleColor:'#fff', bodyColor:'#cbcbcb' }
+    },
+    scales: {
+      x: { ticks: { color: '#b3b3b3', font:{family:'Pretendard'} }, grid: { color: '#2a2a2a', drawBorder:false } },
+      y: { ticks: { color: '#b3b3b3', font:{family:'Pretendard'}, precision: 0 }, grid: { color: '#2a2a2a', drawBorder:false }, beginAtZero: true }
+    }
+  };
+}
+
+/* -------- Excel export -------- */
+function exportUsersXlsx() {
+  const rows = Object.values(state.users).map(u => ({
+    이름: u.name, 아이디: u.username, 소그룹: u.group||'', 권한: u.role==='admin'?'관리자':'회원',
+    비밀번호: u.password, 생성일: u.createdAt ? new Date(u.createdAt).toLocaleString('ko-KR') : ''
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '사용자');
+  XLSX.writeFile(wb, `새김_사용자_${todayStr()}.xlsx`);
+}
+
+async function exportRecordsXlsx() {
+  const snap = await db.ref('records').once('value');
+  const data = snap.val() || {};
+  const rows = Object.values(data)
+    .sort((a,b)=> (b.sermonDate||'').localeCompare(a.sermonDate||''))
+    .map(r => ({
+      설교날짜: r.sermonDate||'', 이름: r.userName||'', 소그룹: r.group||'',
+      설교제목: r.sermonTitle||'', 설교자: r.preacher||'', 본문말씀: r.mainVerse||'',
+      느낀점: r.feeling||'', 기억에남는구절: r.memorable||'', 실천결심: r.resolution||'',
+      작성일: r.createdAt ? new Date(r.createdAt).toLocaleString('ko-KR') : ''
+    }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  // 컬럼 폭
+  ws['!cols'] = [{wch:12},{wch:10},{wch:14},{wch:24},{wch:10},{wch:16},{wch:40},{wch:40},{wch:40},{wch:18}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '설교기록');
+  XLSX.writeFile(wb, `새김_설교기록_${todayStr()}.xlsx`);
+}
+
+/* =========================================================
+   초기화 / 첫 관리자 자동 생성
+   ========================================================= */
+async function ensureFirstAdmin() {
+  // 사용자가 한 명도 없으면 기본 admin 계정 생성 (admin / admin)
+  const snap = await db.ref('users').limitToFirst(1).once('value');
+  if (!snap.exists()) {
+    await db.ref('users').push({
+      name:'관리자', username:'admin', password:'admin', group:'관리', role:'admin', createdAt: Date.now()
+    });
+    console.log('[새김] 초기 관리자 계정 생성: admin / admin (반드시 비밀번호 변경하세요)');
+  }
+}
+
+async function init() {
+  try {
+    await ensureFirstAdmin();
+  } catch(e) {
+    console.warn('Firebase 연결 확인 필요:', e.message);
+  }
+  // 세션 복원
+  const saved = localStorage.getItem('saekim_session');
+  if (saved) {
+    try {
+      state.me = JSON.parse(saved);
+      enterApp();
+      return;
+    } catch(e){}
+  }
+}
+
+init();
+</script>
+</body>
+</html>
