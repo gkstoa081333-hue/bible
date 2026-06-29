@@ -212,6 +212,58 @@ tbody tr:last-child{border-bottom:none}
 
 .card-counts{display:inline-flex;gap:10px;font-size:12px;color:var(--text-muted);margin-top:6px}
 .card-counts span{display:inline-flex;align-items:center;gap:3px}
+
+/* feeling chips */
+.chip-grid{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--bg-elev);color:var(--text-near);
+  padding:8px 14px;border-radius:9999px;font-size:13px;font-weight:600;
+  border:1px solid transparent;cursor:pointer;transition:all .15s;user-select:none;
+}
+.chip:hover{background:#2a2a2a}
+.chip.active{background:rgba(30,215,96,.12);color:var(--accent);border-color:var(--accent)}
+.chip .emoji{font-size:14px}
+
+/* photo upload */
+.photo-input{display:none}
+.photo-zone{
+  border:2px dashed var(--border);border-radius:12px;
+  padding:32px 16px;text-align:center;cursor:pointer;
+  background:var(--bg-elev);transition:all .15s;
+}
+.photo-zone:hover{border-color:var(--accent);background:#222}
+.photo-zone .ico{font-size:32px;opacity:.6;margin-bottom:8px}
+.photo-zone .label{font-size:14px;font-weight:600}
+.photo-zone .hint{font-size:12px;color:var(--text-muted);margin-top:4px}
+.photo-preview{position:relative;border-radius:12px;overflow:hidden;background:#000}
+.photo-preview img{display:block;width:100%;max-height:400px;object-fit:contain}
+.photo-remove{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:700}
+.photo-remove:hover{background:var(--error)}
+.photo-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#000;cursor:pointer;display:block}
+.qt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+
+/* badges */
+.badge-shelf{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--bg-card);padding:6px 12px;border-radius:9999px;
+  font-size:12px;font-weight:700;border:1px solid #333;
+}
+.badge.earned{background:rgba(30,215,96,.12);color:var(--accent);border-color:var(--accent)}
+.badge.locked{opacity:.35}
+.badge .emoji{font-size:14px}
+.badge-current{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,rgba(30,215,96,.2),rgba(30,215,96,.05));
+  border:1px solid var(--accent);padding:10px 18px;border-radius:9999px;
+}
+.badge-current .emoji{font-size:24px}
+.badge-current .name{font-weight:700;font-size:15px}
+.badge-current .progress{font-size:11px;color:var(--text-muted)}
+
+.progress-bar{height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
 </style>
 </head>
 <body>
@@ -251,11 +303,13 @@ tbody tr:last-child{border-bottom:none}
       <button class="nav-item" data-page="mine"><span class="ico">♪</span> 내 기록</button>
       <button class="nav-item" data-page="group"><span class="ico">◉</span> 소그룹 나눔</button>
       <button class="nav-item" data-page="sharing"><span class="ico">▶</span> 나눔 모드</button>
+      <button class="nav-item" data-page="quiet"><span class="ico">✦</span> 묵상 인증</button>
       <button class="nav-item hidden" data-page="admin" id="navAdmin"><span class="ico">⚙</span> 관리자</button>
     </nav>
     <div class="sidebar-foot">
       <div class="me-name" id="meName">-</div>
       <div class="me-role" id="meRole">-</div>
+      <div id="meBadge" style="margin-top:6px"></div>
       <button class="logout-btn" onclick="logout()">로그아웃</button>
     </div>
   </aside>
@@ -306,6 +360,63 @@ const state = {
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* 느낀점 옵션 (체크박스용) */
+const FEELING_OPTIONS = [
+  { value:'은혜받음', emoji:'🙏' },
+  { value:'도전받음', emoji:'💪' },
+  { value:'위로받음', emoji:'💖' },
+  { value:'회개함',   emoji:'🔥' },
+  { value:'감사함',   emoji:'🎉' },
+  { value:'깨달음',   emoji:'💡' },
+  { value:'소망생김', emoji:'✨' },
+  { value:'결단함',   emoji:'📖' },
+  { value:'평안함',   emoji:'😌' },
+  { value:'마음아픔', emoji:'🥺' },
+];
+
+/* 메달 시스템 (묵상 인증 횟수 기반) */
+const BADGES = [
+  { count:1,   emoji:'🌱', name:'새싹' },
+  { count:5,   emoji:'🌿', name:'잎' },
+  { count:10,  emoji:'🌳', name:'나무' },
+  { count:20,  emoji:'🌺', name:'꽃나무' },
+  { count:50,  emoji:'🏆', name:'사명자' },
+  { count:100, emoji:'👑', name:'면류관' },
+];
+
+function currentBadge(n) {
+  let cur = null, next = BADGES[0];
+  for (let i = 0; i < BADGES.length; i++) {
+    if (n >= BADGES[i].count) { cur = BADGES[i]; next = BADGES[i+1] || null; }
+  }
+  return { current: cur, next };
+}
+
+/* 이미지 압축 (canvas) - max 1024px, JPEG 0.75 */
+function compressImage(file, maxDim = 1024, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
+          else { width = Math.round(width * maxDim / height); height = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 const todayStr = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -377,6 +488,22 @@ function enterApp() {
     navigate(page);
   }));
   navigate('write');
+  refreshMyBadge();
+}
+
+async function refreshMyBadge() {
+  try {
+    const snap = await db.ref('quietTimes').orderByChild('userId').equalTo(state.me.id).once('value');
+    const n = Object.keys(snap.val()||{}).length;
+    const { current } = currentBadge(n);
+    const el = $('#meBadge');
+    if (!el) return;
+    if (current) {
+      el.innerHTML = `<span class="badge earned" style="font-size:11px"><span class="emoji">${current.emoji}</span><span>${current.name} · ${n}회</span></span>`;
+    } else {
+      el.innerHTML = `<span class="text-muted" style="font-size:11px">묵상 인증 0회</span>`;
+    }
+  } catch(e) {}
 }
 
 /* -------- 5. 라우팅 -------- */
@@ -387,6 +514,7 @@ function navigate(page) {
   else if (page === 'mine') renderMine();
   else if (page === 'group') renderGroup();
   else if (page === 'sharing') renderSharing();
+  else if (page === 'quiet') renderQuiet();
   else if (page === 'admin') renderAdmin();
 }
 
@@ -395,14 +523,25 @@ function navigate(page) {
    ========================================================= */
 async function renderWrite(editingRecord=null) {
   const r = editingRecord || {};
-  // 등록된 설교 일정 가져오기
-  const sSnap = await db.ref('sermons').once('value');
+  // 등록된 설교 일정 + 설교자 명단 가져오기
+  const [sSnap, pSnap] = await Promise.all([
+    db.ref('sermons').once('value'),
+    db.ref('preachers').once('value'),
+  ]);
   const sermonsRaw = sSnap.val() || {};
   const sermons = Object.entries(sermonsRaw).map(([id,s])=>({id,...s}))
     .sort((a,b)=> (b.date||'').localeCompare(a.date||''));
   const sermonOptions = sermons.map(s =>
     `<option value="${s.id}">${esc(fmtDate(s.date))} · ${esc(s.title||'(제목없음)')}${s.preacher?' · '+esc(s.preacher):''}</option>`
   ).join('');
+
+  const preachersRaw = pSnap.val() || {};
+  const preachers = Object.entries(preachersRaw).map(([id,p])=>({id,...p}))
+    .sort((a,b)=> (a.order||0) - (b.order||0));
+
+  // 느낀점 데이터 (배열 또는 문자열 호환)
+  const selectedFeelings = Array.isArray(r.feelings) ? r.feelings : [];
+  const feelingNote = r.feelingNote || (typeof r.feeling === 'string' ? r.feeling : '');
 
   const main = $('#mainContent');
   main.innerHTML = `
@@ -426,7 +565,15 @@ async function renderWrite(editingRecord=null) {
         </div>
         <div class="field">
           <label>설교자</label>
-          <input id="f_preacher" class="input" placeholder="예: 김목사" value="${esc(r.preacher||'')}" />
+          ${preachers.length > 0 ? `
+            <select id="f_preacher" class="input">
+              <option value="">선택 또는 직접 입력 ↓</option>
+              ${preachers.map(p => `<option value="${esc(p.name)}" ${r.preacher===p.name?'selected':''}>${esc(p.name)}${p.title?' ('+esc(p.title)+')':''}</option>`).join('')}
+            </select>
+            <input id="f_preacher_custom" class="input" style="margin-top:6px" placeholder="명단에 없으면 여기에 직접 입력" value="${preachers.find(p=>p.name===r.preacher)?'':esc(r.preacher||'')}" />
+          ` : `
+            <input id="f_preacher" class="input" placeholder="예: 김목사" value="${esc(r.preacher||'')}" />
+          `}
         </div>
       </div>
       <div class="field">
@@ -437,10 +584,22 @@ async function renderWrite(editingRecord=null) {
         <label>본문 말씀</label>
         <input id="f_verse" class="input" placeholder="예: 요한복음 3:16" value="${esc(r.mainVerse||'')}" />
       </div>
+
       <div class="field">
-        <label>느낀점</label>
-        <textarea id="f_feeling" class="textarea" placeholder="오늘 설교를 들으며 느낀 점을 자유롭게 기록하세요">${esc(r.feeling||'')}</textarea>
+        <label>오늘 느낀점 (여러 개 선택 가능)</label>
+        <div class="chip-grid" id="f_feelings">
+          ${FEELING_OPTIONS.map(f => `
+            <div class="chip ${selectedFeelings.includes(f.value)?'active':''}" data-value="${esc(f.value)}" onclick="this.classList.toggle('active')">
+              <span class="emoji">${f.emoji}</span><span>${esc(f.value)}</span>
+            </div>
+          `).join('')}
+        </div>
       </div>
+      <div class="field">
+        <label>느낀점 자유 메모 (선택)</label>
+        <textarea id="f_feelingNote" class="textarea" style="min-height:80px" placeholder="더 자세히 적고 싶다면">${esc(feelingNote)}</textarea>
+      </div>
+
       <div class="field">
         <label>기억에 남는 말씀·구절</label>
         <textarea id="f_memorable" class="textarea" placeholder="가장 마음에 와닿은 구절이나 표현">${esc(r.memorable||'')}</textarea>
@@ -455,7 +614,6 @@ async function renderWrite(editingRecord=null) {
       </div>
     </div>
   `;
-  // 캐시
   state._sermonsCache = sermons;
 }
 
@@ -472,22 +630,34 @@ function applySermonPreset() {
 }
 
 async function saveRecord(editId) {
+  // 설교자: select가 있으면 select 값, 비어있으면 custom 입력값 사용
+  let preacher = '';
+  const sel = $('#f_preacher');
+  if (sel && sel.tagName === 'SELECT') {
+    preacher = sel.value || ($('#f_preacher_custom')?.value || '').trim();
+  } else if (sel) {
+    preacher = sel.value.trim();
+  }
+  // 느낀점 chips
+  const feelings = [...$$('#f_feelings .chip.active')].map(c => c.dataset.value);
+
   const payload = {
     userId: state.me.id,
     userName: state.me.name,
     group: state.me.group || '미배정',
     sermonDate: $('#f_date').value,
     sermonTitle: $('#f_title').value.trim(),
-    preacher: $('#f_preacher').value.trim(),
+    preacher,
     mainVerse: $('#f_verse').value.trim(),
-    feeling: $('#f_feeling').value.trim(),
+    feelings,
+    feelingNote: $('#f_feelingNote').value.trim(),
     memorable: $('#f_memorable').value.trim(),
     resolution: $('#f_resolution').value.trim(),
     updatedAt: Date.now(),
   };
   if (!payload.sermonDate) { toast('설교 날짜를 입력하세요','error'); return; }
-  if (!payload.feeling && !payload.memorable && !payload.resolution) {
-    toast('최소 한 가지는 작성해주세요','error'); return;
+  if (feelings.length === 0 && !payload.feelingNote && !payload.memorable && !payload.resolution) {
+    toast('느낀점·구절·결심 중 하나는 작성해주세요','error'); return;
   }
 
   try {
@@ -593,6 +763,15 @@ async function openDetail(id) {
   const snap = await db.ref('records/' + id).once('value');
   const r = snap.val();
   if (!r) return;
+  const feelings = Array.isArray(r.feelings) ? r.feelings : [];
+  const feelingNote = r.feelingNote || (typeof r.feeling === 'string' ? r.feeling : '');
+  const feelingChips = feelings.length ? `<div class="chip-grid" style="margin-top:6px">${
+    feelings.map(v => {
+      const opt = FEELING_OPTIONS.find(o => o.value === v);
+      return `<span class="chip active" style="cursor:default"><span class="emoji">${opt?opt.emoji:'•'}</span><span>${esc(v)}</span></span>`;
+    }).join('')
+  }</div>` : '';
+
   showModal(`
     <div class="modal-title">${esc(r.sermonTitle || '(제목 없음)')}</div>
     <div class="detail-meta">
@@ -601,7 +780,7 @@ async function openDetail(id) {
       ${r.mainVerse ? ' · ' + esc(r.mainVerse) : ''}
       <br><span class="tag tag-accent" style="margin-top:6px;display:inline-block">${esc(r.userName)} · ${esc(r.group||'미배정')}</span>
     </div>
-    ${r.feeling ? `<div class="detail-section"><h3>느낀점</h3><p>${esc(r.feeling)}</p></div>`:''}
+    ${feelings.length || feelingNote ? `<div class="detail-section"><h3>느낀점</h3>${feelingChips}${feelingNote?`<p style="margin-top:8px">${esc(feelingNote)}</p>`:''}</div>`:''}
     ${r.memorable ? `<div class="detail-section"><h3>기억에 남는 구절</h3><p>${esc(r.memorable)}</p></div>`:''}
     ${r.resolution ? `<div class="detail-section"><h3>실천·결심</h3><p>${esc(r.resolution)}</p></div>`:''}
     <div id="reactBar-${id}"></div>
@@ -869,6 +1048,15 @@ function renderShareSlide() {
   const r = state._shareList[state._shareIdx];
   const total = state._shareList.length;
   const idx = state._shareIdx + 1;
+  const feelings = Array.isArray(r.feelings) ? r.feelings : [];
+  const feelingNote = r.feelingNote || (typeof r.feeling === 'string' ? r.feeling : '');
+  const feelingChips = feelings.length ? `<div class="chip-grid" style="margin-top:8px">${
+    feelings.map(v => {
+      const opt = FEELING_OPTIONS.find(o => o.value === v);
+      return `<span class="chip active" style="cursor:default"><span class="emoji">${opt?opt.emoji:'•'}</span><span>${esc(v)}</span></span>`;
+    }).join('')
+  }</div>` : '';
+
   $('#shareStage').innerHTML = `
     <div class="detail-wrap" style="position:relative">
       <div class="detail-head">
@@ -886,7 +1074,7 @@ function renderShareSlide() {
         </div>
         <button class="btn btn-outline btn-sm" onclick="exitSharing()">나가기 (ESC)</button>
       </div>
-      ${r.feeling ? `<div class="detail-section"><h3>느낀점</h3><p>${esc(r.feeling)}</p></div>`:''}
+      ${feelings.length || feelingNote ? `<div class="detail-section"><h3>느낀점</h3>${feelingChips}${feelingNote?`<p style="margin-top:8px">${esc(feelingNote)}</p>`:''}</div>`:''}
       ${r.memorable ? `<div class="detail-section"><h3>기억에 남는 구절</h3><p>${esc(r.memorable)}</p></div>`:''}
       ${r.resolution ? `<div class="detail-section"><h3>실천·결심</h3><p>${esc(r.resolution)}</p></div>`:''}
       <div id="shareReact"></div>
@@ -911,6 +1099,291 @@ function exitSharing() {
 }
 
 /* =========================================================
+   PAGE: 묵상 인증 (사진 + 메달)
+   ========================================================= */
+async function renderQuiet() {
+  const main = $('#mainContent');
+  main.innerHTML = `
+    <div class="page-title">묵상 인증</div>
+    <div class="page-sub">매일의 말씀 묵상을 사진으로 인증하고 메달을 받아보세요</div>
+    <div id="quietHeader"></div>
+    <div class="toolbar" style="margin-top:18px">
+      <div class="row">
+        <button class="btn btn-ghost btn-sm qt-tab active" data-tab="mine" onclick="switchQuietTab('mine')">내 인증</button>
+        <button class="btn btn-ghost btn-sm qt-tab" data-tab="group" onclick="switchQuietTab('group')">소그룹 전체</button>
+      </div>
+      <button class="btn btn-primary" onclick="openQuietModal()">+ 묵상 인증</button>
+    </div>
+    <div id="quietList" class="empty">불러오는 중...</div>
+  `;
+  state._quietTab = 'mine';
+  await refreshQuietHeader();
+  await refreshQuietList();
+}
+
+function switchQuietTab(tab) {
+  state._quietTab = tab;
+  $$('.qt-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  $$('.qt-tab').forEach(b => {
+    if (b.dataset.tab === tab) { b.classList.remove('btn-ghost'); b.classList.add('btn-primary'); }
+    else { b.classList.remove('btn-primary'); b.classList.add('btn-ghost'); }
+  });
+  refreshQuietList();
+}
+
+async function refreshQuietHeader() {
+  const snap = await db.ref('quietTimes').orderByChild('userId').equalTo(state.me.id).once('value');
+  const myCount = Object.keys(snap.val() || {}).length;
+  const { current, next } = currentBadge(myCount);
+  const remain = next ? (next.count - myCount) : 0;
+  const pct = next ? Math.min(100, Math.round(myCount / next.count * 100)) : 100;
+
+  const header = `
+    <div class="card" style="padding:20px">
+      <div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px">
+        <div>
+          <div class="stat-label">현재 등급</div>
+          ${current ? `
+            <div class="badge-current" style="margin-top:8px">
+              <span class="emoji">${current.emoji}</span>
+              <div>
+                <div class="name">${current.name}</div>
+                <div class="progress">누적 ${myCount}회 인증</div>
+              </div>
+            </div>
+          ` : `
+            <div class="text-muted" style="margin-top:8px;font-size:14px">첫 인증으로 🌱 새싹 메달을 받아보세요</div>
+          `}
+        </div>
+        <div style="min-width:200px;flex:1;max-width:320px">
+          <div class="stat-label">${next ? `다음 등급: ${next.emoji} ${next.name}` : '최고 등급 달성! 🎉'}</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:6px">
+            ${next ? `${remain}회 남음 (${myCount}/${next.count})` : '계속 묵상의 길을 걸어가세요'}
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        </div>
+      </div>
+      <div class="badge-shelf">
+        ${BADGES.map(b => `
+          <div class="badge ${myCount >= b.count ? 'earned' : 'locked'}">
+            <span class="emoji">${b.emoji}</span>
+            <span>${b.name}</span>
+            <span style="color:var(--text-muted);font-weight:400">${b.count}회</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  $('#quietHeader').innerHTML = header;
+}
+
+async function refreshQuietList() {
+  let snap;
+  if (state._quietTab === 'mine') {
+    snap = await db.ref('quietTimes').orderByChild('userId').equalTo(state.me.id).once('value');
+  } else {
+    snap = await db.ref('quietTimes').orderByChild('group').equalTo(state.me.group || '미배정').once('value');
+  }
+  const data = snap.val() || {};
+  const list = Object.entries(data).map(([id,q])=>({id,...q}))
+    .sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (b.createdAt||0) - (a.createdAt||0));
+
+  const el = $('#quietList');
+  if (list.length === 0) {
+    el.className = 'empty';
+    el.innerHTML = `<div class="empty-emoji">✦</div>아직 인증 기록이 없습니다`;
+    return;
+  }
+  el.className = '';
+  el.innerHTML = `<div class="qt-grid">${list.map(q => quietCard(q)).join('')}</div>`;
+}
+
+function quietCard(q) {
+  const isMine = q.userId === state.me.id;
+  // 사진은 별도 노드에서 lazy 로딩
+  return `
+    <div class="card" style="padding:0;overflow:hidden;cursor:pointer" onclick="openQuietDetail('${q.id}')">
+      <div style="position:relative;aspect-ratio:1;background:#000;display:flex;align-items:center;justify-content:center">
+        <img class="photo-thumb" id="qtThumb-${q.id}" alt="" style="display:none" />
+        <div id="qtPlaceholder-${q.id}" style="font-size:32px;opacity:.4">${q.hasPhoto?'⏳':'📖'}</div>
+      </div>
+      <div style="padding:10px 12px">
+        <div style="font-size:12px;font-weight:700">${esc(fmtDate(q.date))}</div>
+        ${!isMine ? `<div style="font-size:11px;color:var(--text-muted)">${esc(q.userName)}</div>`:''}
+        ${q.note ? `<div style="font-size:12px;color:var(--text-muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(q.note)}</div>`:''}
+      </div>
+    </div>
+  `;
+}
+
+// 묵상 카드 썸네일 lazy 로딩
+function lazyLoadQuietThumbs() {
+  $$('[id^="qtThumb-"]').forEach(async (img) => {
+    const id = img.id.replace('qtThumb-', '');
+    if (img.dataset.loaded) return;
+    try {
+      const snap = await db.ref('quietPhotos/' + id).once('value');
+      const photo = snap.val();
+      if (photo) {
+        img.src = photo;
+        img.style.display = 'block';
+        const ph = document.getElementById('qtPlaceholder-' + id);
+        if (ph) ph.style.display = 'none';
+        img.dataset.loaded = '1';
+      }
+    } catch(e) {}
+  });
+}
+
+// refreshQuietList 끝에서 lazyLoad 호출하도록
+const _origRefreshQuietList = refreshQuietList;
+refreshQuietList = async function() {
+  await _origRefreshQuietList.apply(this, arguments);
+  setTimeout(lazyLoadQuietThumbs, 50);
+};
+
+function openQuietModal() {
+  showModal(`
+    <div class="modal-title">묵상 인증</div>
+    <div class="form-row">
+      <div class="field"><label>날짜</label><input id="q_date" class="input" type="date" value="${todayStr()}" /></div>
+      <div class="field"><label>본문 (선택)</label><input id="q_verse" class="input" placeholder="예: 시편 23:1-6" /></div>
+    </div>
+    <div class="field">
+      <label>묵상 사진 (성경책·노트 등)</label>
+      <input type="file" id="q_photo_input" class="photo-input" accept="image/*" capture="environment" onchange="handlePhotoSelect(event)" />
+      <div id="q_photo_zone" class="photo-zone" onclick="document.getElementById('q_photo_input').click()">
+        <div class="ico">📷</div>
+        <div class="label">탭하여 사진 촬영 또는 선택</div>
+        <div class="hint">자동으로 압축됩니다 · 선택사항</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>짧은 메모 (선택)</label>
+      <textarea id="q_note" class="textarea" style="min-height:80px" placeholder="오늘 묵상하며 느낀 한 줄"></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" id="q_save_btn" onclick="saveQuietTime()">인증하기</button>
+    </div>
+  `);
+  state._photoData = null;
+}
+
+async function handlePhotoSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  toast('사진 압축 중...');
+  try {
+    const dataUrl = await compressImage(file, 1024, 0.75);
+    state._photoData = dataUrl;
+    const zone = $('#q_photo_zone');
+    if (zone) {
+      zone.innerHTML = `
+        <div class="photo-preview" style="margin:0">
+          <img src="${dataUrl}" alt="" />
+          <div class="photo-remove" onclick="event.stopPropagation();removePhoto()">×</div>
+        </div>
+      `;
+      zone.style.padding = '0';
+      zone.style.border = 'none';
+      zone.onclick = null;
+    }
+  } catch(e) { console.error(e); toast('사진 처리 실패','error'); }
+}
+
+function removePhoto() {
+  state._photoData = null;
+  $('#q_photo_input').value = '';
+  const zone = $('#q_photo_zone');
+  zone.style.padding = '32px 16px';
+  zone.style.border = '2px dashed var(--border)';
+  zone.onclick = () => document.getElementById('q_photo_input').click();
+  zone.innerHTML = `
+    <div class="ico">📷</div>
+    <div class="label">탭하여 사진 촬영 또는 선택</div>
+    <div class="hint">자동으로 압축됩니다 · 선택사항</div>
+  `;
+}
+
+async function saveQuietTime() {
+  const date = $('#q_date').value;
+  const verse = $('#q_verse').value.trim();
+  const note = $('#q_note').value.trim();
+  if (!date) { toast('날짜를 입력하세요','error'); return; }
+  if (!state._photoData && !note) { toast('사진 또는 메모 중 하나는 필요해요','error'); return; }
+
+  const btn = $('#q_save_btn');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; }
+
+  try {
+    const newRef = await db.ref('quietTimes').push({
+      userId: state.me.id,
+      userName: state.me.name,
+      group: state.me.group || '미배정',
+      date, verse, note,
+      hasPhoto: !!state._photoData,
+      createdAt: Date.now(),
+    });
+    // 사진은 별도 노드에 저장 (lazy-loading)
+    if (state._photoData) {
+      await db.ref('quietPhotos/' + newRef.key).set(state._photoData);
+    }
+    toast('인증되었습니다!');
+    state._photoData = null;
+    closeModal();
+    await refreshQuietHeader(); // 메달 갱신
+    await refreshQuietList();
+    refreshMyBadge();
+    // 새 메달 획득 알림
+    const snap = await db.ref('quietTimes').orderByChild('userId').equalTo(state.me.id).once('value');
+    const cnt = Object.keys(snap.val()||{}).length;
+    const newBadge = BADGES.find(b => b.count === cnt);
+    if (newBadge) {
+      setTimeout(() => toast(`🎉 새 메달 획득: ${newBadge.emoji} ${newBadge.name}!`), 500);
+    }
+  } catch(e) {
+    console.error(e);
+    toast('저장 실패','error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '인증하기'; }
+  }
+}
+
+async function openQuietDetail(id) {
+  const [qSnap, pSnap] = await Promise.all([
+    db.ref('quietTimes/' + id).once('value'),
+    db.ref('quietPhotos/' + id).once('value'),
+  ]);
+  const q = qSnap.val();
+  const photo = pSnap.val();
+  if (!q) return;
+  const isMine = q.userId === state.me.id;
+  showModal(`
+    <div class="modal-title">${esc(fmtDate(q.date))} 묵상</div>
+    <div class="detail-meta">${esc(q.userName)} · ${esc(q.group||'미배정')}${q.verse?' · '+esc(q.verse):''}</div>
+    ${photo ? `<div class="photo-preview" style="margin-top:14px"><img src="${photo}" alt="" /></div>` : ''}
+    ${q.note ? `<div class="detail-section"><h3>메모</h3><p>${esc(q.note)}</p></div>` : ''}
+    <div class="modal-foot">
+      ${isMine ? `<button class="btn btn-outline" onclick="deleteQuietTime('${id}')">삭제</button>` : ''}
+      <button class="btn btn-ghost" onclick="closeModal()">닫기</button>
+    </div>
+  `);
+}
+
+async function deleteQuietTime(id) {
+  if (!confirm('이 묵상 인증을 삭제할까요?')) return;
+  await Promise.all([
+    db.ref('quietTimes/' + id).remove(),
+    db.ref('quietPhotos/' + id).remove(),
+  ]);
+  toast('삭제되었습니다');
+  closeModal();
+  await refreshQuietHeader();
+  await refreshQuietList();
+}
+
+/* =========================================================
    PAGE: 관리자
    ========================================================= */
 async function renderAdmin() {
@@ -924,6 +1397,7 @@ async function renderAdmin() {
       </div>
       <div class="row">
         <button class="btn btn-ghost btn-sm" onclick="exportUsersXlsx()">사용자 엑셀</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportQuietTimesXlsx()">묵상 엑셀</button>
         <button class="btn btn-primary btn-sm" onclick="exportRecordsXlsx()">기록 엑셀</button>
       </div>
     </div>
@@ -939,6 +1413,14 @@ async function renderAdmin() {
 
     <div class="page-title" style="font-size:18px;margin-top:24px">출석 현황 (주별)</div>
     <div id="attendance" class="table-wrap"></div>
+
+    <div class="page-title" style="font-size:18px;margin-top:32px">설교자 관리</div>
+    <div class="page-sub">미리 등록된 설교자는 회원 작성 시 드롭다운에서 선택할 수 있습니다</div>
+    <div class="toolbar" style="margin-bottom:10px">
+      <div></div>
+      <button class="btn btn-primary btn-sm" onclick="openPreacherModal()">+ 설교자 등록</button>
+    </div>
+    <div id="preacherTable" class="table-wrap"></div>
 
     <div class="page-title" style="font-size:18px;margin-top:32px">설교 일정 관리</div>
     <div class="page-sub">미리 등록하면 회원이 새 기록 작성 시 드롭다운에서 선택할 수 있습니다</div>
@@ -962,6 +1444,9 @@ async function renderAdmin() {
         <div style="position:relative;height:240px;overflow-y:auto"><canvas id="chartByUser"></canvas></div>
       </div>
     </div>
+
+    <div class="page-title" style="font-size:18px;margin-top:32px">묵상 인증 메달 현황</div>
+    <div id="badgeBoard" class="table-wrap"></div>
   `;
 
   // load users
@@ -976,6 +1461,10 @@ async function renderAdmin() {
   // load sermons
   const sSnap = await db.ref('sermons').once('value');
   state.sermons = sSnap.val() || {};
+
+  // load preachers
+  const pSnap = await db.ref('preachers').once('value');
+  state.preachers = pSnap.val() || {};
 
   // stats
   const userCount = Object.keys(state.users).length;
@@ -996,8 +1485,10 @@ async function renderAdmin() {
 
   renderUserTable();
   renderAttendance(recArr);
+  renderPreacherTable();
   renderSermonTable();
   renderCharts(recArr);
+  renderBadgeBoard();
 }
 
 function statCard(label, value, sub='') {
@@ -1135,6 +1626,116 @@ async function deleteUser(id) {
   await db.ref('users/' + id).remove();
   toast('삭제되었습니다');
   renderAdmin();
+}
+
+/* -------- Preacher (설교자 명단) -------- */
+function renderPreacherTable() {
+  const list = Object.entries(state.preachers||{}).map(([id,p])=>({id,...p}))
+    .sort((a,b)=> (a.order||0) - (b.order||0) || (a.name||'').localeCompare(b.name||''));
+
+  $('#preacherTable').innerHTML = `
+    <table>
+      <thead>
+        <tr><th>이름</th><th>직함</th><th>순서</th><th></th></tr>
+      </thead>
+      <tbody>
+        ${list.length === 0 ? '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px">등록된 설교자가 없습니다</td></tr>' :
+          list.map(p => `
+            <tr>
+              <td><strong>${esc(p.name)}</strong></td>
+              <td>${esc(p.title||'-')}</td>
+              <td>${p.order||0}</td>
+              <td class="row-actions">
+                <button class="btn btn-ghost btn-sm" onclick="openPreacherModal('${p.id}')">수정</button>
+                <button class="btn btn-outline btn-sm" onclick="deletePreacher('${p.id}')">삭제</button>
+              </td>
+            </tr>
+          `).join('')
+        }
+      </tbody>
+    </table>
+  `;
+}
+
+function openPreacherModal(editId=null) {
+  const p = editId ? state.preachers[editId] : {};
+  showModal(`
+    <div class="modal-title">${editId ? '설교자 수정' : '설교자 등록'}</div>
+    <div class="field"><label>이름</label><input id="p_name" class="input" value="${esc(p.name||'')}" placeholder="예: 김한샘" /></div>
+    <div class="form-row">
+      <div class="field"><label>직함</label><input id="p_title" class="input" value="${esc(p.title||'')}" placeholder="예: 담임목사" /></div>
+      <div class="field"><label>표시 순서</label><input id="p_order" class="input" type="number" value="${p.order||0}" placeholder="0" /></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" onclick="savePreacher(${editId?`'${editId}'`:'null'})">저장</button>
+    </div>
+  `);
+}
+
+async function savePreacher(editId) {
+  const payload = {
+    name: $('#p_name').value.trim(),
+    title: $('#p_title').value.trim(),
+    order: Number($('#p_order').value) || 0,
+    updatedAt: Date.now(),
+  };
+  if (!payload.name) { toast('이름은 필수입니다','error'); return; }
+  try {
+    if (editId) await db.ref('preachers/' + editId).update(payload);
+    else { payload.createdAt = Date.now(); await db.ref('preachers').push(payload); }
+    toast('저장되었습니다');
+    closeModal();
+    renderAdmin();
+  } catch(e) { console.error(e); toast('저장 실패','error'); }
+}
+
+async function deletePreacher(id) {
+  if (!confirm('이 설교자를 삭제할까요?')) return;
+  await db.ref('preachers/' + id).remove();
+  toast('삭제되었습니다');
+  renderAdmin();
+}
+
+/* -------- 메달 현황 (관리자 뷰) -------- */
+async function renderBadgeBoard() {
+  const snap = await db.ref('quietTimes').once('value');
+  const all = snap.val() || {};
+  const counts = {};
+  Object.values(all).forEach(q => {
+    counts[q.userId] = (counts[q.userId] || 0) + 1;
+  });
+  const memberUsers = Object.entries(state.users)
+    .map(([id,u]) => ({ id, ...u, count: counts[id] || 0 }))
+    .filter(u => u.role !== 'admin')
+    .sort((a,b) => b.count - a.count || (a.name||'').localeCompare(b.name||''));
+
+  if (memberUsers.length === 0) {
+    $('#badgeBoard').innerHTML = `<div class="empty">데이터가 없습니다</div>`;
+    return;
+  }
+
+  $('#badgeBoard').innerHTML = `
+    <table>
+      <thead>
+        <tr><th>이름</th><th>그룹</th><th>인증 횟수</th><th>현재 메달</th><th>다음 단계까지</th></tr>
+      </thead>
+      <tbody>
+        ${memberUsers.map(u => {
+          const { current, next } = currentBadge(u.count);
+          return `
+            <tr>
+              <td><strong>${esc(u.name)}</strong></td>
+              <td>${esc(u.group||'-')}</td>
+              <td style="color:var(--accent);font-weight:700">${u.count}회</td>
+              <td>${current ? `<span class="badge earned"><span class="emoji">${current.emoji}</span><span>${current.name}</span></span>` : '<span class="text-muted">-</span>'}</td>
+              <td>${next ? `${next.emoji} ${next.name}까지 ${next.count - u.count}회` : '<span class="text-accent">최고 등급</span>'}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 /* -------- Sermon (설교 일정) -------- */
@@ -1341,18 +1942,40 @@ async function exportRecordsXlsx() {
   const data = snap.val() || {};
   const rows = Object.values(data)
     .sort((a,b)=> (b.sermonDate||'').localeCompare(a.sermonDate||''))
-    .map(r => ({
-      설교날짜: r.sermonDate||'', 이름: r.userName||'', 소그룹: r.group||'',
-      설교제목: r.sermonTitle||'', 설교자: r.preacher||'', 본문말씀: r.mainVerse||'',
-      느낀점: r.feeling||'', 기억에남는구절: r.memorable||'', 실천결심: r.resolution||'',
-      작성일: r.createdAt ? new Date(r.createdAt).toLocaleString('ko-KR') : ''
-    }));
+    .map(r => {
+      const feelings = Array.isArray(r.feelings) ? r.feelings.join(', ') : '';
+      const note = r.feelingNote || (typeof r.feeling === 'string' ? r.feeling : '');
+      return {
+        설교날짜: r.sermonDate||'', 이름: r.userName||'', 소그룹: r.group||'',
+        설교제목: r.sermonTitle||'', 설교자: r.preacher||'', 본문말씀: r.mainVerse||'',
+        느낀점태그: feelings, 느낀점메모: note,
+        기억에남는구절: r.memorable||'', 실천결심: r.resolution||'',
+        작성일: r.createdAt ? new Date(r.createdAt).toLocaleString('ko-KR') : ''
+      };
+    });
   const ws = XLSX.utils.json_to_sheet(rows);
-  // 컬럼 폭
-  ws['!cols'] = [{wch:12},{wch:10},{wch:14},{wch:24},{wch:10},{wch:16},{wch:40},{wch:40},{wch:40},{wch:18}];
+  ws['!cols'] = [{wch:12},{wch:10},{wch:14},{wch:24},{wch:10},{wch:16},{wch:30},{wch:36},{wch:36},{wch:36},{wch:18}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '설교기록');
   XLSX.writeFile(wb, `새김_설교기록_${todayStr()}.xlsx`);
+}
+
+async function exportQuietTimesXlsx() {
+  const snap = await db.ref('quietTimes').once('value');
+  const data = snap.val() || {};
+  const rows = Object.values(data)
+    .sort((a,b)=> (b.date||'').localeCompare(a.date||''))
+    .map(q => ({
+      날짜: q.date||'', 이름: q.userName||'', 소그룹: q.group||'',
+      본문: q.verse||'', 메모: q.note||'',
+      사진여부: q.hasPhoto ? 'O' : '-',
+      작성일: q.createdAt ? new Date(q.createdAt).toLocaleString('ko-KR') : ''
+    }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:12},{wch:10},{wch:14},{wch:16},{wch:40},{wch:8},{wch:18}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '묵상인증');
+  XLSX.writeFile(wb, `새김_묵상인증_${todayStr()}.xlsx`);
 }
 
 /* =========================================================
