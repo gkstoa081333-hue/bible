@@ -624,8 +624,25 @@ function applySermonPreset() {
   if (!s) return;
   if (s.date) $('#f_date').value = s.date;
   if (s.title) $('#f_title').value = s.title;
-  if (s.preacher) $('#f_preacher').value = s.preacher;
   if (s.mainVerse) $('#f_verse').value = s.mainVerse;
+  // 설교자: SELECT인 경우 옵션에 있으면 선택, 없으면 custom 입력칸에
+  if (s.preacher) {
+    const pEl = $('#f_preacher');
+    if (pEl.tagName === 'SELECT') {
+      const hasOption = [...pEl.options].some(o => o.value === s.preacher);
+      if (hasOption) {
+        pEl.value = s.preacher;
+        const custom = $('#f_preacher_custom');
+        if (custom) custom.value = '';
+      } else {
+        pEl.value = '';
+        const custom = $('#f_preacher_custom');
+        if (custom) custom.value = s.preacher;
+      }
+    } else {
+      pEl.value = s.preacher;
+    }
+  }
   toast('설교 정보가 자동 입력되었습니다');
 }
 
@@ -720,9 +737,9 @@ function recordCard(r, isMine) {
   `;
 }
 
-// 카드별 공감/댓글 카운트 비동기 로딩 (목록 그린 직후 호출)
+// 카드별 공감/댓글 카운트 병렬 로딩 (목록 그린 직후 호출)
 async function loadCardCounts(recordIds) {
-  for (const id of recordIds) {
+  await Promise.all(recordIds.map(async (id) => {
     try {
       const [rSnap, cSnap] = await Promise.all([
         db.ref('reactions/' + id).once('value'),
@@ -734,7 +751,7 @@ async function loadCardCounts(recordIds) {
       Object.values(reactions).forEach(r => { if (counts[r.type] !== undefined) counts[r.type]++; });
       const cCount = Object.keys(comments).length;
       const el = document.getElementById('counts-' + id);
-      if (!el) continue;
+      if (!el) return;
       const parts = [];
       if (counts.love) parts.push(`<span>❤️ ${counts.love}</span>`);
       if (counts.pray) parts.push(`<span>🙏 ${counts.pray}</span>`);
@@ -742,7 +759,7 @@ async function loadCardCounts(recordIds) {
       if (cCount) parts.push(`<span>💬 ${cCount}</span>`);
       el.innerHTML = parts.join('');
     } catch(e) {}
-  }
+  }));
 }
 
 async function editRecord(id) {
@@ -1317,6 +1334,15 @@ async function saveQuietTime() {
   if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; }
 
   try {
+    // 같은 날짜 중복 인증 방지 (1일 1회)
+    const dupSnap = await db.ref('quietTimes').orderByChild('userId').equalTo(state.me.id).once('value');
+    const existing = Object.values(dupSnap.val() || {});
+    if (existing.some(q => q.date === date)) {
+      toast('이미 해당 날짜에 인증했어요 (1일 1회)','error');
+      if (btn) { btn.disabled = false; btn.textContent = '인증하기'; }
+      return;
+    }
+
     const newRef = await db.ref('quietTimes').push({
       userId: state.me.id,
       userName: state.me.name,
@@ -1606,10 +1632,20 @@ async function saveUser(editId) {
   // duplicate username check
   const dup = Object.entries(state.users).find(([id,u]) => u.username === payload.username && id !== editId);
   if (dup) { toast('이미 사용 중인 아이디입니다','error'); return; }
+  // 본인 권한 강등 방지
+  if (editId === state.me.id && payload.role !== 'admin') {
+    toast('본인의 관리자 권한은 해제할 수 없습니다','error'); return;
+  }
 
   try {
     if (editId) {
       await db.ref('users/' + editId).update(payload);
+      // 본인 정보 수정 시 세션 갱신
+      if (editId === state.me.id) {
+        state.me = { ...state.me, ...payload };
+        localStorage.setItem('saekim_session', JSON.stringify(state.me));
+        $('#meName').textContent = state.me.name + ' (' + (state.me.group || '미배정') + ')';
+      }
       toast('수정되었습니다');
     } else {
       payload.createdAt = Date.now();
@@ -1622,6 +1658,7 @@ async function saveUser(editId) {
 }
 
 async function deleteUser(id) {
+  if (id === state.me.id) { toast('본인 계정은 삭제할 수 없습니다','error'); return; }
   if (!confirm('이 사용자를 삭제할까요? (해당 사용자의 기록은 유지됩니다)')) return;
   await db.ref('users/' + id).remove();
   toast('삭제되었습니다');
@@ -1998,14 +2035,28 @@ async function init() {
   } catch(e) {
     console.warn('Firebase 연결 확인 필요:', e.message);
   }
-  // 세션 복원
+  // 세션 복원 + 서버 재검증
   const saved = localStorage.getItem('saekim_session');
   if (saved) {
     try {
-      state.me = JSON.parse(saved);
-      enterApp();
-      return;
-    } catch(e){}
+      const sess = JSON.parse(saved);
+      // 서버에서 사용자 존재/비밀번호 일치 확인
+      const snap = await db.ref('users/' + sess.id).once('value');
+      const user = snap.val();
+      if (user && user.password === sess.password) {
+        // 최신 정보로 세션 갱신 (그룹/권한 변경 반영)
+        state.me = { id: sess.id, ...user };
+        localStorage.setItem('saekim_session', JSON.stringify(state.me));
+        enterApp();
+        return;
+      } else {
+        // 삭제되었거나 비밀번호 변경됨 → 세션 무효화
+        localStorage.removeItem('saekim_session');
+        toast('세션이 만료되었습니다. 다시 로그인해주세요','error');
+      }
+    } catch(e){
+      localStorage.removeItem('saekim_session');
+    }
   }
 }
 
